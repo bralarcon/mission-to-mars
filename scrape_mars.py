@@ -10,24 +10,40 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 
-def init_browser():
-    executable_path = {"executable_path":"C:\Webdrivers\chromedriver_win32\chromedriver"}
-    return Browser("chrome", **executable_path, headless=False)
 
-def scrape(): 
-    browser = init_browser()
-    mars_data = {} 
+executable_path = {"executable_path":"C:\Webdrivers\chromedriver_win32\chromedriver"}
+browser= Browser("chrome", **executable_path, headless=False)
 
+# Defining scrape & dictionary
+def scrape():
+    final_data = {}
+    output = marsNews()
+    final_data["mars_news"] = output[0]
+    final_data["mars_paragraph"] = output[1]
+    final_data["mars_image"] = marsImage()
+    final_data["mars_weather"] = marsWeather()
+    final_data["mars_facts"] = marsFacts()
+    final_data["mars_hemisphere"] = marsHem()
+
+    return final_data
+
+ 
+#Mars News
+def marsNews ():
     api = "https://mars.nasa.gov/news/"
     driver = webdriver.Chrome()
-    driver.get(api)  
-#Mars News
+    driver.get(api) 
     soup =  BeautifulSoup(driver.page_source, "html.parser")
     news_title = soup.find_all("div", {"class": "content_title"})
     news_title[0].find("a").get_text()
     news_p = soup.find_all("div", {"class": "rollover_description_inner"})
     news_p[0].get_text() 
+    output = [news_title, news_p]
+    return output
+
+
 # JPL Mars Space image
+def marsImage():
     space_url = "https://www.jpl.nasa.gov/spaceimages/?search=&category=Mars"
 
     executable_path = {'executable_path': 'chromedriver.exe'}
@@ -47,8 +63,10 @@ def scrape():
     extension = results.find('figure', 'lede').a['href']
     link = "https://www.jpl.nasa.gov"
     featured_image_url = link + extension
-    print(featured_image_url)
+    return featured_image_url
+
 # Twitter-Weather
+def marsWeather():
     consumer_key ="qN0U90cXCQTIV57XZRYOD0Znr"
     consumer_secret = "UiyILUuUOzkNnTTyvubQePtahZiFQ8XzTTGWH34ekrKQEigbdQ"
     access_token = "1009210970554576896-tONBAz2Dw4lqGaLj3QbDB5wZVOR0yR"
@@ -63,12 +81,16 @@ def scrape():
     target_user = "@MarsWxReport"
     tweet = api.user_timeline(target_user, count=1)[0]
     mars_weather = tweet['text']
-    print(mars_weather)
+    return mars_weather
+
 #Mars Facts
+def marsFacts():
     mf_url = "https://space-facts.com/mars/"
     table = pd.read_html(mf_url)
-    table[0]   
+    return table[0]
+       
 #mars hemispheres
+def marsHem():
     hemispheres_url = "https://astrogeology.usgs.gov/search/results?q=hemisphere+enhanced&k1=target&v1=Mars"
     browser.visit(hemispheres_url)
     html = browser.html
@@ -89,7 +111,4 @@ def scrape():
         image_url = downloads.find("a")["href"]
         mars_hemisphere.append({"title": title, "img_url": image_url})
     
-    print(mars_hemisphere)
-
-
-    return mars_data
+    return mars_hemisphere
